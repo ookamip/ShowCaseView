@@ -25,6 +25,8 @@ class GuideMessageView extends LinearLayout {
     private TextView mTitleTextView;
     private TextView mContentTextView;
 
+    private Boolean drawRoundRect = true;
+
 
     GuideMessageView(Context context) {
         super(context);
@@ -67,6 +69,13 @@ class GuideMessageView extends LinearLayout {
 
 
     public void setContentText(String content) {
+        if(content == null) {
+            removeView(mContentTextView);
+            float density = mTitleTextView.getContext().getResources().getDisplayMetrics().density;
+            final int padding = (int) (10 * density);
+            mTitleTextView.setPadding(padding, padding, padding, padding);
+            return;
+        }
         mContentTextView.setText(content);
     }
 
@@ -98,6 +107,10 @@ class GuideMessageView extends LinearLayout {
         invalidate();
     }
 
+    public void setDrawRoundRect(boolean drawRoundRect) {
+        this.drawRoundRect = drawRoundRect;
+    }
+
     int location[] = new int[2];
 
     @Override
@@ -114,6 +127,10 @@ class GuideMessageView extends LinearLayout {
                 getHeight() - getPaddingBottom());
 
 
-        canvas.drawRoundRect(mRect, 15, 15, mPaint);
+        if (drawRoundRect) {
+            canvas.drawRoundRect(mRect, 15, 15, mPaint);
+        } else {
+            canvas.drawRect(mRect, mPaint);
+        }
     }
 }

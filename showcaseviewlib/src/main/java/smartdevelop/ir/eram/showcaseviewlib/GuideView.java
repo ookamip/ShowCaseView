@@ -38,26 +38,26 @@ public class GuideView extends FrameLayout {
 
     static final String TAG = "GuideView";
 
-    private static final int INDICATOR_HEIGHT              = 40;
-    private static final int MESSAGE_VIEW_PADDING          = 5;
-    private static final int SIZE_ANIMATION_DURATION       = 700;
-    private static final int APPEARING_ANIMATION_DURATION  = 400;
-    private static final int CIRCLE_INDICATOR_SIZE         = 6;
-    private static final int LINE_INDICATOR_WIDTH_SIZE     = 3;
-    private static final int STROKE_CIRCLE_INDICATOR_SIZE  = 3;
-    private static final int RADIUS_SIZE_TARGET_RECT       = 15;
-    private static final int MARGIN_INDICATOR              = 15;
+    private static final int INDICATOR_HEIGHT = 40;
+    private static final int MESSAGE_VIEW_PADDING = 5;
+    private static final int SIZE_ANIMATION_DURATION = 700;
+    private static final int APPEARING_ANIMATION_DURATION = 400;
+    private static final int CIRCLE_INDICATOR_SIZE = 6;
+    private static final int LINE_INDICATOR_WIDTH_SIZE = 3;
+    private static final int STROKE_CIRCLE_INDICATOR_SIZE = 3;
+    private static final int RADIUS_SIZE_TARGET_RECT = 15;
+    private static final int MARGIN_INDICATOR = 15;
 
-    private static final int BACKGROUND_COLOR              = 0x99000000;
-    private static final int CIRCLE_INNER_INDICATOR_COLOR  = 0xffcccccc;
-    private static final int CIRCLE_INDICATOR_COLOR        = Color.WHITE;
-    private static final int LINE_INDICATOR_COLOR          = Color.WHITE;
+    private static final int BACKGROUND_COLOR = 0x99000000;
+    private static final int CIRCLE_INNER_INDICATOR_COLOR = 0xffcccccc;
+    private static final int CIRCLE_INDICATOR_COLOR = Color.WHITE;
+    private static final int LINE_INDICATOR_COLOR = Color.WHITE;
 
-    private final Paint selfPaint           = new Paint();
-    private final Paint paintLine           = new Paint();
-    private final Paint paintCircle         = new Paint();
-    private final Paint paintCircleInner    = new Paint();
-    private final Paint targetPaint         = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint selfPaint = new Paint();
+    private final Paint paintLine = new Paint();
+    private final Paint paintCircle = new Paint();
+    private final Paint paintCircleInner = new Paint();
+    private final Paint targetPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Xfermode X_FER_MODE_CLEAR = new PorterDuffXfermode(PorterDuff.Mode.CLEAR);
 
     private View target;
@@ -74,10 +74,12 @@ public class GuideView extends FrameLayout {
     private float circleIndicatorSizeFinal;
     private float circleInnerIndicatorSize = 0;
     private float lineIndicatorWidthSize;
-    private int   messageViewPadding;
+    private int messageViewPadding;
     private float marginGuide;
     private float strokeCircleWidth;
     private float indicatorHeight;
+
+    private boolean drawRoundRect = true;
 
     private boolean isPerformedAnimationSize = false;
 
@@ -85,6 +87,7 @@ public class GuideView extends FrameLayout {
     private Gravity mGravity;
     private DismissType dismissType;
     private GuideMessageView mMessageView;
+    private int targetViewPadding = 0;
 
 
     private GuideView(Context context, View view) {
@@ -122,9 +125,9 @@ public class GuideView extends FrameLayout {
                 int[] locationTarget = new int[2];
                 target.getLocationOnScreen(locationTarget);
 
-                targetRect = new RectF(locationTarget[0],
+                targetRect = new RectF(locationTarget[0] - targetViewPadding,
                         locationTarget[1],
-                        locationTarget[0] + target.getWidth(),
+                        locationTarget[0] + target.getWidth() + targetViewPadding,
                         locationTarget[1] + target.getHeight());
 
                 selfRect.set(getPaddingLeft(),
@@ -149,7 +152,8 @@ public class GuideView extends FrameLayout {
                 @Override
                 public void onAnimationUpdate(ValueAnimator valueAnimator) {
                     circleIndicatorSize = (float) circleSizeAnimator.getAnimatedValue();
-                    circleInnerIndicatorSize = (float) circleSizeAnimator.getAnimatedValue() - density;
+                    circleInnerIndicatorSize =
+                            (float) circleSizeAnimator.getAnimatedValue() - density;
                     postInvalidate();
                 }
             });
@@ -254,7 +258,11 @@ public class GuideView extends FrameLayout {
             targetPaint.setXfermode(X_FER_MODE_CLEAR);
             targetPaint.setAntiAlias(true);
 
-            canvas.drawRoundRect(targetRect, RADIUS_SIZE_TARGET_RECT, RADIUS_SIZE_TARGET_RECT, targetPaint);
+            if (drawRoundRect) {
+                canvas.drawRoundRect(targetRect, RADIUS_SIZE_TARGET_RECT, RADIUS_SIZE_TARGET_RECT, targetPaint);
+            } else {
+                canvas.drawRect(targetRect, targetPaint);
+            }
         }
     }
 
@@ -420,6 +428,8 @@ public class GuideView extends FrameLayout {
         private float circleIndicatorSize;
         private float circleInnerIndicatorSize;
         private float strokeCircleWidth;
+        private boolean setRoundRect;
+        private int targetViewPadding;
 
         public Builder(Context context) {
             this.context = context;
@@ -582,6 +592,15 @@ public class GuideView extends FrameLayout {
             return this;
         }
 
+        public Builder setRoundRect(boolean isRound) {
+            this.setRoundRect = isRound;
+            return this;
+        }
+
+        public Builder setTargetViewPadding(int targetViewPadding) {
+            this.targetViewPadding = targetViewPadding;
+            return this;
+        }
 
         public GuideView build() {
             GuideView guideView = new GuideView(context, targetView);
@@ -590,8 +609,7 @@ public class GuideView extends FrameLayout {
             float density = context.getResources().getDisplayMetrics().density;
 
             guideView.setTitle(title);
-            if (contentText != null)
-                guideView.setContentText(contentText);
+            guideView.setContentText(contentText);
             if (titleTextSize != 0)
                 guideView.setTitleTextSize(titleTextSize);
             if (contentTextSize != 0)
@@ -622,6 +640,11 @@ public class GuideView extends FrameLayout {
             if (strokeCircleWidth != 0) {
                 guideView.strokeCircleWidth = strokeCircleWidth * density;
             }
+            if (!setRoundRect) {
+                guideView.drawRoundRect = false;
+                guideView.mMessageView.setDrawRoundRect(false);
+            }
+            guideView.targetViewPadding = targetViewPadding;
 
             return guideView;
         }
